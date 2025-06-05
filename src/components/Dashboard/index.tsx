@@ -8,7 +8,8 @@ import MarketMetrics from "./MarketMetrics";
 import TransactionHistory from "./TransactionHistory";
 import NFTGallery from "./NFTGallery";
 import NetworkStatus from "./NetworkStatus";
-import CivicAccountInfo from "./CivicAccountInfo";
+import CivicAccountInfo from "@/components/Dashboard/CivicAccountInfo";
+import { OasisROFLStatus } from "@/components/Oasis/OasisROFLStatus";
 import dynamic from "next/dynamic";
 
 // Dynamically import the map component with no SSR
@@ -303,12 +304,15 @@ const Dashboard = () => {
           </div>
 
           {/* Network Status and zkSync Account - Second Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
             <div className="bg-dark_grey bg-opacity-35 rounded-3xl p-8">
               <NetworkStatus />
             </div>
             <div className="bg-dark_grey bg-opacity-35 rounded-3xl p-8">
               <CivicAccountInfo />
+            </div>
+            <div className="bg-dark_grey bg-opacity-35 rounded-3xl p-8">
+              <OasisROFLStatus />
             </div>
           </div>
 

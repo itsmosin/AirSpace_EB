@@ -8,6 +8,7 @@ import Aoscompo from "@/utils/aos";
 import { CivicAuthProvider } from "@/context/CivicAuthContext";
 import { FlowProvider } from "@/context/FlowContext";
 import { MetaMaskProvider } from "@/context/MetaMaskContext";
+import { OasisROFLProvider } from "@/context/OasisROFLContext";
 import { Toaster } from "react-hot-toast";
 
 const font = DM_Sans({ subsets: ["latin"] });
@@ -25,19 +26,21 @@ export default function RootLayout({
           enableSystem={true}
           defaultTheme="system"
         >
-          <MetaMaskProvider>
-            <CivicAuthProvider>
-              <FlowProvider>
-                <Aoscompo>
-                  <Header />
-                  {children}
-                  <Footer />
-                </Aoscompo>
-                <ScrollToTop />
-                <Toaster position="top-right" />
-              </FlowProvider>
-            </CivicAuthProvider>
-          </MetaMaskProvider>
+          <OasisROFLProvider>
+            <MetaMaskProvider>
+              <CivicAuthProvider>
+                <FlowProvider>
+                  <Aoscompo>
+                    <Header />
+                    {children}
+                    <Footer />
+                  </Aoscompo>
+                  <ScrollToTop />
+                  <Toaster position="top-right" />
+                </FlowProvider>
+              </CivicAuthProvider>
+            </MetaMaskProvider>
+          </OasisROFLProvider>
         </ThemeProvider>
       </body>
     </html>

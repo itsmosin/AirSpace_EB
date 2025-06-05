@@ -7,6 +7,8 @@ import AgreementDialog from "./AgreementDialog";
 import dynamic from 'next/dynamic';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import ZkVerificationBadge from "@/components/ZkVerificationBadge";
+import { OasisPriceValidator } from "@/components/Oasis/OasisPriceValidator";
+import { PriceValidationResult } from "@/services/oasisROFLService";
 
 // Dynamically import the map component with no SSR
 const PropertyMapView = dynamic(() => import('./PropertyMapView'), {
@@ -64,6 +66,7 @@ export const ListingsGrid = () => {
   const [isAgreementOpen, setIsAgreementOpen] = useState(false);
   const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null);
   const [verifiedListings, setVerifiedListings] = useState<Record<string, boolean>>({});
+  const [priceValidations, setPriceValidations] = useState<Record<string, PriceValidationResult>>({});
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -131,6 +134,13 @@ export const ListingsGrid = () => {
     setIsAgreementOpen(true);
   };
 
+  const handleValidationComplete = (listingId: string, result: PriceValidationResult) => {
+    setPriceValidations(prev => ({
+      ...prev,
+      [listingId]: result
+    }));
+  };
+
   const getListingImage = (title: string) => {
     const firstWord = title.split(' ')[0].toLowerCase();
     switch (firstWord) {
@@ -156,11 +166,12 @@ export const ListingsGrid = () => {
     <>
       <div className="grid gap-8">
         {listings.map((listing) => (
-          <div key={listing.id} className="grid lg:grid-cols-2 gap-8 bg-dark_grey bg-opacity-35 rounded-3xl p-8">
+          <div key={listing.id} className="grid lg:grid-cols-3 gap-8 bg-dark_grey bg-opacity-35 rounded-3xl p-8">
             <div className="relative h-[400px] rounded-2xl overflow-hidden">
               {/* Replace static image with 3D map */}
               <PropertyMapView nft={listing} />
             </div>
+            
             <div className="flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -204,6 +215,14 @@ export const ListingsGrid = () => {
                   Buy Now
                 </button>
               </div>
+            </div>
+
+            {/* Oasis Price Validation Panel */}
+            <div className="lg:col-span-1">
+              <OasisPriceValidator 
+                nft={listing}
+                onValidationComplete={(result) => handleValidationComplete(listing.id, result)}
+              />
             </div>
           </div>
         ))}
