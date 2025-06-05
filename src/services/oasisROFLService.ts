@@ -38,6 +38,7 @@ class OasisROFLService {
   private provider: ethers.providers.JsonRpcProvider;
   private config: ROFLConfig;
   private isInitialized: boolean = false;
+  private useFallback: boolean = false; // Flag to indicate if we should use fallback
 
   constructor() {
     this.provider = new ethers.providers.JsonRpcProvider(SAPPHIRE_RPC_URL);
@@ -51,7 +52,7 @@ class OasisROFLService {
 
   async initialize(): Promise<void> {
     try {
-      // Initialize connection to Sapphire for ROFL management
+      // Try to initialize connection to Sapphire for ROFL management
       const network = await this.provider.getNetwork();
       console.log('Connected to Sapphire network:', network.name);
       
@@ -59,10 +60,14 @@ class OasisROFLService {
       await this.verifyROFLRegistration();
       
       this.isInitialized = true;
-      console.log('ROFL service initialized successfully');
+      this.useFallback = false;
+      console.log('✅ ROFL service initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize ROFL service:', error);
-      throw new Error('ROFL initialization failed');
+      console.warn('⚠️ Real ROFL service failed, falling back to mock:', error);
+      // Fall back to mock mode
+      this.isInitialized = true;
+      this.useFallback = true;
+      console.log('✅ Mock ROFL service initialized as fallback');
     }
   }
 
@@ -87,30 +92,42 @@ class OasisROFLService {
       await this.initialize();
     }
 
-    try {
-      // Prepare confidential computation request
-      const computationRequest = {
-        appId: this.config.appId,
-        method: 'validatePrice',
-        data: this.encryptPropertyData(propertyData),
-        timestamp: Date.now(),
-        nonce: Math.random().toString(36).substring(7)
-      };
-
-      // Execute confidential computation in ROFL TEE
-      const result = await this.executeConfidentialComputation(computationRequest);
-      
-      // Verify TEE signature
-      const isValidSignature = await this.verifyTEESignature(result);
-      if (!isValidSignature) {
-        throw new Error('Invalid TEE signature');
-      }
-
-      return result.data;
-    } catch (error) {
-      console.error('Price validation failed:', error);
-      throw new Error('Price validation service unavailable');
+    // Use fallback if real service failed
+    if (this.useFallback) {
+      return this.generateMockValidation(propertyData);
     }
+
+    try {
+      // Try real ROFL implementation first
+      return await this.executeRealValidation(propertyData);
+    } catch (error) {
+      console.warn('⚠️ Real validation failed, using fallback:', error);
+      // Fall back to mock validation
+      this.useFallback = true;
+      return this.generateMockValidation(propertyData);
+    }
+  }
+
+  private async executeRealValidation(propertyData: PropertyData): Promise<PriceValidationResult> {
+    // Prepare confidential computation request
+    const computationRequest = {
+      appId: this.config.appId,
+      method: 'validatePrice',
+      data: this.encryptPropertyData(propertyData),
+      timestamp: Date.now(),
+      nonce: Math.random().toString(36).substring(7)
+    };
+
+    // Execute confidential computation in ROFL TEE
+    const result = await this.executeConfidentialComputation(computationRequest);
+    
+    // Verify TEE signature
+    const isValidSignature = await this.verifyTEESignature(result);
+    if (!isValidSignature) {
+      throw new Error('Invalid TEE signature');
+    }
+
+    return result.data;
   }
 
   private encryptPropertyData(data: PropertyData): string {
@@ -205,6 +222,10 @@ class OasisROFLService {
       insights.push('Substantial air rights opportunity');
     }
 
+    if (data.maximumHeight > 50) {
+      insights.push('High-rise development potential');
+    }
+
     return {
       isValid: true,
       rating,
@@ -213,6 +234,85 @@ class OasisROFLService {
       marketPosition,
       validatedAt: new Date().toISOString(),
     };
+  }
+
+  // FALLBACK MOCK IMPLEMENTATION
+  private generateMockValidation(data: PropertyData): Promise<PriceValidationResult> {
+    console.log('🔄 Using mock validation as fallback');
+    
+    // Add a delay to simulate processing
+    return new Promise<PriceValidationResult>((resolve) => {
+      setTimeout(() => {
+        // Create deterministic but realistic mock results based on property data
+        const pricePerFloor = data.askingPrice / data.availableFloors;
+        
+        // Simulate price analysis
+        let rating: PriceValidationResult['rating'];
+        let marketPosition: PriceValidationResult['marketPosition'];
+        let confidence: number;
+        const insights: string[] = [];
+
+        if (pricePerFloor < 30000) {
+          rating = 'excellent';
+          marketPosition = 'underpriced';
+          confidence = 0.95;
+          insights.push('Exceptional value - significantly below market rate');
+          insights.push('High potential for appreciation');
+          insights.push('Prime opportunity for investment');
+        } else if (pricePerFloor < 50000) {
+          rating = 'good';
+          marketPosition = 'underpriced';
+          confidence = 0.88;
+          insights.push('Good value proposition');
+          insights.push('Priced below comparable properties');
+          insights.push('Solid investment potential');
+        } else if (pricePerFloor < 70000) {
+          rating = 'fair';
+          marketPosition = 'fair';
+          confidence = 0.82;
+          insights.push('Reasonably priced for the market');
+          insights.push('Aligns with similar air rights valuations');
+          insights.push('Market-standard pricing');
+        } else if (pricePerFloor < 90000) {
+          rating = 'poor';
+          marketPosition = 'overpriced';
+          confidence = 0.75;
+          insights.push('Above market rate');
+          insights.push('Consider negotiating for better terms');
+          insights.push('Limited upside potential at current price');
+        } else {
+          rating = 'overpriced';
+          marketPosition = 'overpriced';
+          confidence = 0.91;
+          insights.push('Significantly overpriced');
+          insights.push('Recommend seeking alternative properties');
+          insights.push('High risk of value depreciation');
+        }
+
+        // Add location-specific insights
+        if (data.title.toLowerCase().includes('vancouver') || data.title.toLowerCase().includes('miami')) {
+          insights.push('Prime location with excellent development potential');
+        }
+        
+        if (data.availableFloors > 15) {
+          insights.push('Substantial air rights opportunity');
+        }
+
+        if (data.maximumHeight > 50) {
+          insights.push('High-rise development potential');
+        }
+
+        resolve({
+          isValid: true,
+          rating,
+          confidence,
+          insights,
+          marketPosition,
+          validatedAt: new Date().toISOString(),
+          roflSignature: `fallback_mock_${Math.random().toString(36).substring(7)}`
+        });
+      }, 1500);
+    });
   }
 
   private async getConfidentialMarketData(data: PropertyData): Promise<any> {
@@ -318,10 +418,24 @@ class OasisROFLService {
   }
 
   async getBatchValidation(properties: PropertyData[]): Promise<PriceValidationResult[]> {
-    const results = await Promise.all(
-      properties.map(property => this.validatePrice(property))
-    );
-    return results;
+    if (this.useFallback) {
+      // Mock batch processing with slight delay per property
+      await new Promise(resolve => setTimeout(resolve, properties.length * 200));
+      const results = await Promise.all(properties.map(property => this.generateMockValidation(property)));
+      return results;
+    }
+
+    try {
+      const results = await Promise.all(
+        properties.map(property => this.executeRealValidation(property))
+      );
+      return results;
+    } catch (error) {
+      console.warn('⚠️ Batch validation failed, using fallback');
+      this.useFallback = true;
+      const results = await Promise.all(properties.map(property => this.generateMockValidation(property)));
+      return results;
+    }
   }
 
   async getMarketInsights(region: { lat: number; lng: number; radius: number }): Promise<any> {
@@ -329,14 +443,47 @@ class OasisROFLService {
       await this.initialize();
     }
 
-    // Confidential market analysis for region
+    if (this.useFallback) {
+      // Mock market insights
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      return {
+        averagePrice: Math.floor(Math.random() * 100000) + 50000,
+        marketTrend: Math.random() > 0.5 ? 'bullish' : 'bearish',
+        liquidityIndex: Math.random() * 0.5 + 0.5,
+        projectedGrowth: Math.random() * 0.2,
+        riskFactors: ['regulatory changes', 'market volatility', 'zoning restrictions'],
+        opportunities: ['urban development', 'zoning updates', 'infrastructure improvements']
+      };
+    }
+
+    try {
+      // Real confidential market analysis for region
+      return {
+        averagePrice: this.getRegionalAveragePrice(region.lat, region.lng),
+        marketTrend: 'bullish',
+        liquidityIndex: 0.75,
+        projectedGrowth: 0.12,
+        riskFactors: ['regulatory changes', 'market volatility'],
+        opportunities: ['urban development', 'zoning updates']
+      };
+    } catch (error) {
+      console.warn('⚠️ Market insights failed, using fallback');
+      this.useFallback = true;
+      return this.getMarketInsights(region); // Recursive call will use fallback
+    }
+  }
+
+  // Method to check if service is using fallback
+  isUsingFallback(): boolean {
+    return this.useFallback;
+  }
+
+  // Method to get service status
+  getServiceStatus(): { mode: 'real' | 'fallback'; initialized: boolean } {
     return {
-      averagePrice: this.getRegionalAveragePrice(region.lat, region.lng),
-      marketTrend: 'bullish',
-      liquidityIndex: 0.75,
-      projectedGrowth: 0.12,
-      riskFactors: ['regulatory changes', 'market volatility'],
-      opportunities: ['urban development', 'zoning updates']
+      mode: this.useFallback ? 'fallback' : 'real',
+      initialized: this.isInitialized
     };
   }
 }

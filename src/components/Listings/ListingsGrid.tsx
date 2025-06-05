@@ -166,59 +166,62 @@ export const ListingsGrid = () => {
     <>
       <div className="grid gap-8">
         {listings.map((listing) => (
-          <div key={listing.id} className="grid lg:grid-cols-3 gap-8 bg-dark_grey bg-opacity-35 rounded-3xl p-8">
-            <div className="relative h-[400px] rounded-2xl overflow-hidden">
-              {/* Replace static image with 3D map */}
-              <PropertyMapView nft={listing} />
-            </div>
-            
-            <div className="flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-white text-28">{listing.title}</h2>
-                  <ZkVerificationBadge 
-                    verified={verifiedListings[listing.id] || false} 
-                    proofId={`proof-${listing.id}`}
-                    system="groth16"
-                  />
-                </div>
-                <p className="text-muted text-opacity-80 text-16 mb-4">
-                  {listing.propertyAddress}
-                </p>
-                <p className="text-muted text-opacity-60 text-18 mb-6">
-                  {listing.description}
-                </p>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-deepSlate p-4 rounded-xl">
-                    <p className="text-muted text-16">Current Height</p>
-                    <p className="text-white text-24">{listing.currentHeight} floors</p>
-                  </div>
-                  <div className="bg-deepSlate p-4 rounded-xl">
-                    <p className="text-muted text-16">Max Allowed Height</p>
-                    <p className="text-white text-24">{listing.maximumHeight} floors</p>
-                  </div>
-                </div>
-                <div className="bg-deepSlate p-4 rounded-xl mb-8">
-                  <p className="text-muted text-16">Floors to be Bought</p>
-                  <p className="text-primary text-24">{listing.availableFloors} floors</p>
-                </div>
+          <div key={listing.id} className="bg-dark_grey bg-opacity-35 rounded-3xl p-8">
+            {/* Main listing content - 2 columns */}
+            <div className="grid lg:grid-cols-2 gap-8 mb-8">
+              <div className="relative h-[400px] rounded-2xl overflow-hidden">
+                {/* Replace static image with 3D map */}
+                <PropertyMapView nft={listing} />
               </div>
-              <div className="flex items-center justify-between">
+              
+              <div className="flex flex-col justify-between">
                 <div>
-                  <p className="text-muted text-16">Price</p>
-                  <p className="text-primary text-32">${listing.price.toLocaleString()} USDC</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-white text-28">{listing.title}</h2>
+                    <ZkVerificationBadge 
+                      verified={verifiedListings[listing.id] || false} 
+                      proofId={`proof-${listing.id}`}
+                      system="groth16"
+                    />
+                  </div>
+                  <p className="text-muted text-opacity-80 text-16 mb-4">
+                    {listing.propertyAddress}
+                  </p>
+                  <p className="text-muted text-opacity-60 text-18 mb-6">
+                    {listing.description}
+                  </p>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-deepSlate p-4 rounded-xl">
+                      <p className="text-muted text-16">Current Height</p>
+                      <p className="text-white text-24">{listing.currentHeight} floors</p>
+                    </div>
+                    <div className="bg-deepSlate p-4 rounded-xl">
+                      <p className="text-muted text-16">Max Allowed Height</p>
+                      <p className="text-white text-24">{listing.maximumHeight} floors</p>
+                    </div>
+                  </div>
+                  <div className="bg-deepSlate p-4 rounded-xl mb-8">
+                    <p className="text-muted text-16">Floors to be Bought</p>
+                    <p className="text-primary text-24">{listing.availableFloors} floors</p>
+                  </div>
                 </div>
-                <button 
-                  className="bg-primary text-darkmode px-8 py-3 rounded-lg text-18 font-medium hover:bg-opacity-90 transition-all"
-                  onClick={() => handleBuyClick(listing)}
-                >
-                  Buy Now
-                </button>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-muted text-16">Price</p>
+                    <p className="text-primary text-32">${listing.price.toLocaleString()} USDC</p>
+                  </div>
+                  <button 
+                    className="bg-primary text-darkmode px-8 py-3 rounded-lg text-18 font-medium hover:bg-opacity-90 transition-all"
+                    onClick={() => handleBuyClick(listing)}
+                  >
+                    Buy Now
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Oasis Price Validation Panel */}
-            <div className="lg:col-span-1">
+            {/* Oasis Price Validation Panel - Full width below main content */}
+            <div className="border-t border-slate-700/30 pt-8">
               <OasisPriceValidator 
                 nft={listing}
                 onValidationComplete={(result) => handleValidationComplete(listing.id, result)}

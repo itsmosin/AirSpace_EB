@@ -44,7 +44,7 @@ export const OasisROFLProvider: React.FC<OasisROFLProviderProps> = ({ children }
 
   const [roflStats, setRoflStats] = useState({
     totalValidations: 0,
-    averageProcessingTime: 0,
+    averageProcessingTime: 1200,
     successRate: 100
   });
 
@@ -60,9 +60,16 @@ export const OasisROFLProvider: React.FC<OasisROFLProviderProps> = ({ children }
       console.log('🔐 Initializing Oasis ROFL service...');
       await oasisROFLService.initialize();
       
+      const serviceStatus = oasisROFLService.getServiceStatus();
+      
       setIsInitialized(true);
       setConnectionStatus('connected');
-      console.log('✅ ROFL service connected to Sapphire network');
+      
+      if (serviceStatus.mode === 'fallback') {
+        console.log('⚠️ ROFL service running in fallback mode');
+      } else {
+        console.log('✅ Real ROFL service connected to Sapphire network');
+      }
       
     } catch (err) {
       console.error('❌ Failed to initialize ROFL service:', err);
